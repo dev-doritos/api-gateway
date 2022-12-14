@@ -1,0 +1,48 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: api-gateway
+  # 선언적 라우팅 설정 > Config 파일을 만들어서 프로그래밍적 선언 라우팅 설정 가능
+  cloud:
+    gateway:
+      # Default(Global) Filter 등록
+      default-filters: 
+        - name: GlobalFilter
+          args:
+            baseMessage: Spring Cloud Gateway Global Filter
+            preLogger: true
+            postLogger: true
+      routes:
+        # first-service Router 등록
+        - id: first-service
+          #uri: http://localhost:8001/
+          uri: lb://FIRST-SERVICE # load balancer > Eureka 에 등록된 Application 이름으로 설정
+          predicates:
+            - Path=/first-service/**
+          filters:
+            - AddRequestHeader=first-request, first-request-header2
+            - AddResponseHeader=first-response, first-response-header2
+            - LogFilter
+        # second-service Router 등록
+        - id: second-service
+          #uri: http://localhost:8002/
+          uri: lb://SECOND-SERVICE # load balancer > Eureka 에 등록된 Application 이름으로 설정
+          predicates:
+            - Path=/second-service/**
+          filters:
+            - AddRequestHeader=second-request, second-request-header2
+            - AddResponseHeader=second-response, second-response-header2
+        # user-service Router 등록
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
